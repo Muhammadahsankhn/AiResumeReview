@@ -1,0 +1,20 @@
+{% extends 'jobs/base.html' %}
+
+{% block content %}
+    <h1>Available Jobs</h1>
+    
+    {% for job in jobs %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ job.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ job.location }} | Salary: {{ job.salary_range }}</h6>
+                <p class="card-text">{{ job.description }}</p>
+                <p><strong>Requirements:</strong> {{ job.requirements }}</p>
+                
+                <a href="{% url 'apply_job' job.id %}" class="btn btn-success">Apply with AI Resume Check</a>
+            </div>
+        </div>
+    {% empty %}
+        <p>No jobs posted yet. Please log in as HR to post one.</p>
+    {% endfor %}
+{% endblock %}

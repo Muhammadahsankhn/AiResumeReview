@@ -1,0 +1,35 @@
+{% extends 'jobs/base.html' %}
+
+{% block content %}
+    <h2>My Posted Jobs</h2>
+    <a href="" class="btn btn-primary mb-3">+ Post New Job</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Date Posted</th>
+                <th>Applicants</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>{{ job.created_at|date:"M d, Y" }}</td>
+                <td>{{ job.applications.count }} Candidates</td>
+                <td>
+                    <a href="{% url 'job_applicants' job.id %}" class="btn btn-info btn-sm">
+                        View Applicants
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">You haven't posted any jobs yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
