@@ -1,9 +1,22 @@
+import os
 import google.generativeai as genai
 from pypdf import PdfReader
 import re
+from dotenv import load_dotenv
 
-# --- PASTE YOUR REAL API KEY HERE ---
-genai.configure(api_key="AIzaSy...PASTE_YOUR_KEY_HERE") 
+
+load_dotenv()
+
+
+
+api_key = os.getenv("GEMINI_API_KEY")
+
+
+if not api_key:
+    print("CRITICAL ERROR: API Key not found! Check your .env file.")
+else:
+    genai.configure(api_key=api_key)
+
 
 def extract_text_from_pdf(pdf_file):
     try:
@@ -37,8 +50,9 @@ def get_ai_match_score(resume_text, job_requirements):
     
     try:
         response = model.generate_content(prompt)
-        text_response = response.text
-        
+        text_response = response.text   
+
+
         # Safe extraction logic
         score_match = re.search(r'SCORE:\s*(\d+)', text_response, re.IGNORECASE)
         if score_match:
