@@ -1,26 +1,22 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import RecruiterDashboard from './pages/RecruiterDashboard';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './pages/Hero';
 import Features from './pages/Features';
-
-
-// Simple placeholder for Home
-const Home = () => <h2>Job Board Home (Candidate View)</h2>;
+import RecruiterDashboard from './pages/RecruiterDashboard';
+import Login from './pages/Login';       // <--- Import
+import Register from './pages/Register'; // <--- Import
 
 function App() {
   return (
     <Router>
-      <Header />
-
+      <Header /> 
       <Routes>
-        <Route path="/" element={
-          <>
-            <Hero />
-            <Features />
-          </>
-        } />
+        <Route path="/" element={<><Hero /><Features /></>} />
         <Route path="/dashboard" element={<RecruiterDashboard />} />
+        
+        {/* --- AUTH ROUTES --- */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );

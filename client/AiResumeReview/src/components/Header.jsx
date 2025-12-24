@@ -116,9 +116,13 @@ export default function Example() {
             Company
           </a>
         </PopoverGroup>
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-          <a href="#" className="text-sm/6 font-semibold text-white">
-            Log in <span aria-hidden="true">&rarr;</span>
+        
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-4">
+          <a href="/login" className="text-sm/6 font-semibold text-white">
+            Log in
+          </a>
+          <a href="/register" className="text-sm/6 font-semibold text-indigo-400 hover:text-indigo-300">
+            Register <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
       </nav>
