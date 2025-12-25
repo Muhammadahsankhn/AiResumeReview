@@ -5,16 +5,20 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    profile_image = serializers.ImageField(required=False) # <--- Allow image input
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password') # Add 'role' here later if you add it to the model
+        # Add 'profile_image' and 'role' to fields
+        fields = ('id', 'username', 'email', 'password', 'profile_image', 'role') 
 
     def create(self, validated_data):
-        # This securely hashes the password before saving
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']
-        )
+        # Extract image and password
+        password = validated_data.pop('password')
+        
+        # Create user safely
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        
         return user

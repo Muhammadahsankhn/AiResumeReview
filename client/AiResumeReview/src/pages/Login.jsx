@@ -26,7 +26,15 @@ export default function Login() {
         // SUCCESS: Save the token!
         localStorage.setItem('access_token', data.access)
         localStorage.setItem('refresh_token', data.refresh)
-        
+        localStorage.setItem('user_role', data.role);
+
+        localStorage.setItem('user_name', data.username);
+        localStorage.setItem('user_email', data.email);
+        if (data.profile_image) {
+          // We prepend the backend URL if it's a relative path
+          localStorage.setItem('user_image', 'http://127.0.0.1:8000' + data.profile_image);
+        }
+
         console.log("Login Successful! Token saved.")
         navigate('/dashboard')
       } else {
@@ -42,10 +50,10 @@ export default function Login() {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-900 h-screen text-white">
       {/* ... your existing header code ... */}
-      
+
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form onSubmit={handleLogin} className="space-y-6">
-          
+
           {/* Show Error Message if exists */}
           {error && (
             <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded-md text-sm text-center">
@@ -56,12 +64,12 @@ export default function Login() {
           <div>
             <label className="block text-sm/6 font-medium text-white">Username</label>
             <div className="mt-2">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required 
-                className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6" 
+                required
+                className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
@@ -69,12 +77,12 @@ export default function Login() {
           <div>
             <label className="block text-sm/6 font-medium text-white">Password</label>
             <div className="mt-2">
-              <input 
-                type="password" 
+              <input
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required 
-                className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6" 
+                required
+                className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
@@ -84,6 +92,13 @@ export default function Login() {
               Sign in
             </button>
           </div>
+
+          <p className="mt-10 text-center text-sm/6 text-gray-400">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-semibold text-indigo-400 hover:text-indigo-300">
+              Sign up
+            </Link>
+          </p>
         </form>
         {/* ... footer links ... */}
       </div>

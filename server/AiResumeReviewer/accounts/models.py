@@ -1,16 +1,16 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-
-
-# Create your models here.
-
-
+from django.db import models
 
 class User(AbstractUser):
-    is_recruiter = models.BooleanField(default=False)
-    is_candidate = models.BooleanField(default=True)
-
+    # Add this field
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    
+    # (Optional) You can add the role field now too if you want
+    ROLE_CHOICES = (
+        ('candidate', 'Candidate'),
+        ('recruiter', 'Recruiter'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='candidate')
 
     def __str__(self):
         return self.username
-    

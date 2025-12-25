@@ -1,40 +1,44 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { UserIcon, BriefcaseIcon } from '@heroicons/react/24/outline'
+import { UserIcon, BriefcaseIcon, PhotoIcon } from '@heroicons/react/24/outline'
 
 export default function Register() {
-  const [role, setRole] = useState('candidate') // Default role
+  const [role, setRole] = useState('candidate')
   const navigate = useNavigate()
 
   // State for form inputs
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [avatar, setAvatar] = useState(null) // <--- NEW STATE FOR IMAGE
 
   const handleRegister = async (e) => {
     e.preventDefault()
 
+    // 1. Create FormData object (Required for sending files)
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('email', email)
+    formData.append('password', password)
+    // formData.append('role', role) // Uncomment when backend is ready
+    
+    if (avatar) {
+      formData.append('profile_image', avatar) // 'profile_image' must match Django model field
+    }
+
     try {
       const response = await fetch('http://127.0.0.1:8000/api/register/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          username, 
-          email, 
-          password 
-          // Note: We are not sending 'role' yet. We will add that later!
-        }),
+        // Note: Do NOT set 'Content-Type': 'application/json' manually.
+        // The browser sets the correct boundary for FormData automatically.
+        body: formData, 
       })
 
       if (response.ok) {
-        // SUCCESS
         alert("Registration Successful! Please Login.")
         navigate('/login')
       } else {
-        // ERROR
         const data = await response.json()
         alert("Error: " + JSON.stringify(data))
       }
@@ -56,7 +60,6 @@ export default function Register() {
         
         {/* --- ROLE SELECTION TOGGLE --- */}
         <div className="flex p-1 bg-gray-800 rounded-xl mb-6 relative">
-          {/* The Sliding Background Animation */}
           <motion.div 
             className="absolute bg-indigo-600 rounded-lg h-[calc(100%-8px)] top-1"
             initial={false}
@@ -85,40 +88,64 @@ export default function Register() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-6">
+          
+          {/* --- USERNAME --- */}
           <div>
             <label className="block text-sm/6 font-medium text-white">Full Name</label>
             <div className="mt-2">
               <input
                 type="text"
                 required
-                value={username} // Connected to state
-                onChange={(e) => setUsername(e.target.value)} // Updates state
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
 
+          {/* --- EMAIL --- */}
           <div>
             <label className="block text-sm/6 font-medium text-white">Email address</label>
             <div className="mt-2">
               <input
                 type="email"
                 required
-                value={email} // Connected to state
-                onChange={(e) => setEmail(e.target.value)} // Updates state
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
 
+           {/* --- PROFILE PICTURE UPLOAD --- */}
+           <div>
+            <label className="block text-sm/6 font-medium text-white">Profile Picture <span className="text-gray-500 text-xs">(Optional)</span></label>
+            <div className="mt-2 flex items-center gap-x-3">
+              <PhotoIcon className="size-12 text-gray-500" aria-hidden="true" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setAvatar(e.target.files[0])} // Store the file object
+                className="block w-full text-sm text-gray-400
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-indigo-600 file:text-white
+                  file:cursor-pointer hover:file:bg-indigo-500
+                "
+              />
+            </div>
+          </div>
+
+          {/* --- PASSWORD --- */}
           <div>
             <label className="block text-sm/6 font-medium text-white">Password</label>
             <div className="mt-2">
               <input
                 type="password"
                 required
-                value={password} // Connected to state
-                onChange={(e) => setPassword(e.target.value)} // Updates state
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm/6"
               />
             </div>
