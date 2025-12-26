@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from .models import Job, Application
 from .forms import ApplicationForm
 from django.db.models import F # Import F for complex queries if needed
+from rest_framework import generics, permissions
+from .models import Job
+from .serializers import JobSerializer
 
 # IMPORT YOUR NEW UTILS
 from .utils import extract_text_from_pdf, get_ai_match_score
@@ -90,3 +93,19 @@ def job_applicants(request, job_id):
         'job': job, 
         'applications': applications
     })
+
+
+
+@login_required
+class RecruiterJobView(generics.ListCreateAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # --- THE MAGIC FILTER ---
+        # "Return only jobs where the recruiter IS the current logged-in user"
+        return Job.objects.filter(recruiter=self.request.user).order_by('-posted_at')
+
+    def perform_create(self, serializer):
+        # Automatically set the recruiter to the current user when saving
+        serializer.save(recruiter=self.request.user)
