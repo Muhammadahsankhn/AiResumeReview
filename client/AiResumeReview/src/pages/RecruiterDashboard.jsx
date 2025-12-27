@@ -63,9 +63,29 @@ const RecruiterDashboard = () => {
   }
 
   // --- 3. DELETE JOB (Optional: Connect to API) ---
-  const handleDelete = (id) => {
-     // You would add a DELETE fetch call here later
-     setJobs(jobs.filter(job => job.id !== id))
+  // --- 3. DELETE JOB (Connected to API) ---
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+
+    const token = localStorage.getItem('access_token')
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/jobs/my-jobs/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        // Remove from UI only if Backend delete was successful
+        setJobs(jobs.filter(job => job.id !== id))
+      } else {
+        alert("Failed to delete job. You might not have permission.")
+      }
+    } catch (error) {
+      console.error("Error deleting job:", error)
+    }
   }
 
   if (loading) return <div className="text-white text-center pt-32">Loading your jobs...</div>
@@ -114,6 +134,29 @@ const RecruiterDashboard = () => {
                     className="w-full bg-gray-700 border-gray-600 rounded-lg text-white px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
                 </div>
+
+                <div>
+                    <label className="block text-sm text-gray-400 mb-1">Description</label>
+                    <textarea name="" id=""
+                    type="text" 
+                    required
+                    value={newJob.description}
+                    onChange={(e) => setNewJob({...newJob, description: e.target.value})}
+                    className="w-full bg-gray-700 border-gray-600 rounded-lg text-white px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </textarea>
+                </div>
+
+                <div>
+                    <label className="block text-sm text-gray-400 mb-1">Requirements</label>
+                    <textarea name="" id=""
+                    type="text" 
+                    required
+                    value={newJob.requirements}
+                    onChange={(e) => setNewJob({...newJob, requirements: e.target.value})}
+                    className="w-full bg-gray-700 border-gray-600 rounded-lg text-white px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </textarea>
+                </div>
+
               </div>
               
               {/* Add description fields if needed */}

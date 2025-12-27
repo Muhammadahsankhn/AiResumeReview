@@ -10,13 +10,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('jobs/', include('jobs.urls')),
     
-    # --- AUTH ENDPOINTS ---
-    
-    # DELETE THIS LINE:
-    # path('api/token/', TokenObtainPairView.as_view(), ...), 
-
-    # KEEP THIS LINE (It must be the only one for 'api/token/'):
+   #login api
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
     
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/register/', RegisterView.as_view(), name='register'),

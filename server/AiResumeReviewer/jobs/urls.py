@@ -1,14 +1,34 @@
 from django.urls import path
-from . import views
+from .views import (
+    RecruiterJobView, 
+    RecruiterJobDetailView, 
+    PublicJobListView,  # <--- NEW: For candidates to see jobs
+    ApplyJobView,        # <--- NEW: For candidates to upload resumes
+    JobApplicantsView
+)
 
 urlpatterns = [
-    # This is the home page for jobs (http://127.0.0.1:8000/jobs/)
-    path('', views.job_list, name='job_list'),
+    # ==============================
+    # 1. RECRUITER ENDPOINTS (For Dashboard)
+    # ==============================
     
-    # This is the apply page (e.g., http://127.0.0.1:8000/jobs/apply/1/)
-    path('apply/<int:job_id>/', views.apply_for_job, name='apply_job'),
+    # Get my jobs / Post a new job
+    path('my-jobs/', RecruiterJobView.as_view(), name='recruiter-jobs'),
+    
+    # Delete a specific job (e.g., jobs/my-jobs/5/)
+    path('my-jobs/<int:pk>/', RecruiterJobDetailView.as_view(), name='recruiter-job-detail'),
 
-    # --- NEW HR URLS ---
-    path('hr_dashboard/', views.hr_dashboard, name='hr_dashboard'),
-    path('job/<int:job_id>/applicants/', views.job_applicants, name='job_applicants'),
+
+    # ==============================
+    # 2. CANDIDATE ENDPOINTS (For Public Site)
+    # ==============================
+    
+    # List all active jobs (No login required)
+    path('public/', PublicJobListView.as_view(), name='public-jobs'),
+    
+    # Apply to a specific job (e.g., jobs/5/apply/) - Requires Token
+    path('<int:pk>/apply/', ApplyJobView.as_view(), name='apply-job'),
+
+
+    path('<int:pk>/applicants/', JobApplicantsView.as_view()),
 ]

@@ -23,20 +23,25 @@ export default function Login() {
       const data = await response.json()
 
       if (response.ok) {
-        // SUCCESS: Save the token!
+        // 1. Save Data
         localStorage.setItem('access_token', data.access)
         localStorage.setItem('refresh_token', data.refresh)
         localStorage.setItem('user_role', data.role);
-
+        
         localStorage.setItem('user_name', data.username);
         localStorage.setItem('user_email', data.email);
         if (data.profile_image) {
-          // We prepend the backend URL if it's a relative path
           localStorage.setItem('user_image', 'http://127.0.0.1:8000' + data.profile_image);
         }
+        
 
-        console.log("Login Successful! Token saved.")
-        navigate('/dashboard')
+        // --- 2. DYNAMIC REDIRECT LOGIC ---
+        if (data.role === 'recruiter') {
+            navigate('/dashboard'); // Recruiters go to Dashboard
+        } else {
+            navigate('/jobs'); // Candidates go to Find Jobs page
+        }
+
       } else {
         // FAIL: Show error message
         setError('Invalid username or password')
@@ -49,7 +54,11 @@ export default function Login() {
 
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-900 h-screen text-white">
-      {/* ... your existing header code ... */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">
+          Sign in to your account
+        </h2>
+      </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form onSubmit={handleLogin} className="space-y-6">
@@ -100,7 +109,6 @@ export default function Login() {
             </Link>
           </p>
         </form>
-        {/* ... footer links ... */}
       </div>
     </div>
   )

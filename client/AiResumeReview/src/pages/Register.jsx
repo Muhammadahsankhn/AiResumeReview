@@ -21,12 +21,15 @@ export default function Register() {
     formData.append('username', username)
     formData.append('email', email)
     formData.append('password', password)
-    // formData.append('role', role) // Uncomment when backend is ready
+    formData.append('role', role) 
     
     if (avatar) {
       formData.append('profile_image', avatar) // 'profile_image' must match Django model field
     }
-
+    console.log("--- SENDING REGISTRATION DATA ---")
+    for (var pair of formData.entries()) {
+        console.log(pair[0]+ ', ' + pair[1]); 
+    }
     try {
       const response = await fetch('http://127.0.0.1:8000/api/register/', {
         method: 'POST',

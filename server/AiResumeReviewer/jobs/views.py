@@ -1,111 +1,123 @@
-# jobs/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Job, Application
-from .forms import ApplicationForm
-from django.db.models import F # Import F for complex queries if needed
 from rest_framework import generics, permissions
-from .models import Job
-from .serializers import JobSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+from .models import Job, Application
+from .serializers import JobSerializer, ApplicationSerializer
 
-# IMPORT YOUR NEW UTILS
+# --- IMPORT AI UTILS ---
 from .utils import extract_text_from_pdf, get_ai_match_score
 
-def job_list(request):
-    jobs = Job.objects.all()
-    return render(request, 'jobs/job_list.html', {'jobs': jobs})
+# ==========================================
+# 1. RECRUITER VIEWS (Dashboard Logic)
+# ==========================================
 
-@login_required
-def apply_for_job(request, job_id):
-    job = get_object_or_404(Job, id=job_id)
-    
-    if request.method == 'POST':
-        form = ApplicationForm(request.POST, request.FILES)
-        if form.is_valid():
-            application = form.save(commit=False)
-            application.job = job
-            application.candidate = request.user
-            
-            # --- START AI PROCESSING ---
-            try:
-                # 1. Get the uploaded file from the form
-                uploaded_file = request.FILES['resume_file']
-                
-                # 2. Extract Text
-                resume_text = extract_text_from_pdf(uploaded_file)
-                application.resume_text_content = resume_text # Save text to DB
-                
-                # 3. Get AI Score
-                score, summary = get_ai_match_score(resume_text, job.requirements)
-                
-                # 4. Save results to DB
-                application.ai_match_percentage = score
-                application.ai_summary = summary
-                
-            except Exception as e:
-                print(f"Error processing resume: {e}")
-                # We save it anyway, even if AI fails (score will be 0)
-            
-            application.save()
-            # --- END AI PROCESSING ---
-            
-            return redirect('job_list')
-    else:
-        form = ApplicationForm()
-    
-    return render(request, 'jobs/apply.html', {'form': form, 'job': job})
-
-
-
-
-
-@login_required
-def hr_dashboard(request):
-    """
-    Shows only the jobs posted by the CURRENT logged-in HR user.
-    """
-    # Check if user is HR (optional but good security)
-    # if not request.user.is_recruiter: return redirect('home')
-    
-    my_jobs = Job.objects.filter(recruiter=request.user)
-    return render(request, 'jobs/hr_dashboard.html', {'jobs': my_jobs})
-
-@login_required
-def job_applicants(request, job_id):
-    """
-    Shows all applicants for a specific job.
-    Handles the 'Sort by AI' button logic.
-    """
-    job = get_object_or_404(Job, id=job_id, recruiter=request.user)
-    applications = job.applications.all() # Get all applicants
-    
-    # CHECK: Did the user click the 'Sort' button?
-    sort_type = request.GET.get('sort')
-    
-    if sort_type == 'ai_score':
-        # Sort by Score (High to Low)
-        applications = applications.order_by('-ai_match_percentage')
-    else:
-        # Default: Sort by newest first
-        applications = applications.order_by('-applied_at')
-
-    return render(request, 'jobs/applicants.html', {
-        'job': job, 
-        'applications': applications
-    })
-
-
-
-@login_required
 class RecruiterJobView(generics.ListCreateAPIView):
+    """
+    GET: List all jobs posted by the logged-in recruiter.
+    POST: Create a new job.
+    """
     serializer_class = JobSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # --- THE MAGIC FILTER ---
-        # "Return only jobs where the recruiter IS the current logged-in user"
+        # Return only jobs belonging to the current user
         return Job.objects.filter(recruiter=self.request.user).order_by('-posted_at')
 
     def perform_create(self, serializer):
-        # Automatically set the recruiter to the current user when saving
+        # Auto-assign the recruiter field
         serializer.save(recruiter=self.request.user)
+
+
+class RecruiterJobDetailView(generics.RetrieveDestroyAPIView):
+    """
+    DELETE: Delete a specific job (Only if you own it).
+    """
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure users can only delete their own jobs
+        return Job.objects.filter(recruiter=self.request.user)
+
+
+# ==========================================
+# 2. CANDIDATE VIEWS (Public & Apply)
+# ==========================================
+
+class PublicJobListView(generics.ListAPIView):
+    """
+    GET: List all active jobs for the 'Find Jobs' page.
+    (Accessible to everyone, even guests)
+    """
+    serializer_class = JobSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return Job.objects.filter(is_active=True).order_by('-posted_at')
+
+
+class ApplyJobView(generics.CreateAPIView):
+    """
+    POST: Upload a resume to apply for a job.
+    This triggers the AI Resume Analysis.
+    """
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser] # Required for File Uploads
+
+    def perform_create(self, serializer):
+        # 1. Get the Job ID from the URL
+        job_id = self.kwargs['pk']
+        job = get_object_or_404(Job, id=job_id)
+        
+        # 2. Get the uploaded PDF
+        # 'resume' must match the key used in React's FormData
+        uploaded_file = self.request.FILES['resume'] 
+        
+        # --- START AI PROCESSING ---
+        ai_score = 0
+        ai_summary = "AI processing failed or file unreadable."
+
+        try:
+            # A. Extract Text from PDF
+            resume_text = extract_text_from_pdf(uploaded_file)
+            
+            # B. Send to Gemini for Scoring
+            if resume_text:
+                score, summary = get_ai_match_score(resume_text, job.requirements)
+                ai_score = score
+                ai_summary = summary
+        except Exception as e:
+            print(f"AI Error: {e}")
+
+        # --- SAVE APPLICATION ---
+        # We save the Candidate, Job, AND the calculated AI results
+        serializer.save(
+            candidate=self.request.user,
+            job=job,
+            ai_score=ai_score,
+            ai_summary=ai_summary
+        )
+
+
+
+
+
+class JobApplicantsView(generics.ListAPIView):
+    """
+    GET: List all candidates who applied for a SPECIFIC Job.
+    Only the Recruiter who posted the job can see this.
+    """
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        job_id = self.kwargs['pk'] # Get job_id from URL
+        job = get_object_or_404(Job, id=job_id)
+
+        # SECURITY CHECK: Ensure the logged-in user owns this job
+        if job.recruiter != self.request.user:
+            return Application.objects.none() # Return nothing if they don't own it
+
+        # Return applications for this job, sorted by AI score
+        return Application.objects.filter(job=job).order_by('-ai_score')

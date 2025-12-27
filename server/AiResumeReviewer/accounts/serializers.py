@@ -15,10 +15,11 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Extract image and password
         password = validated_data.pop('password')
-        
+        role = validated_data.pop('role', 'candidate')  # Default role to 'candidate' if not provided 
         # Create user safely
         user = User(**validated_data)
         user.set_password(password)
+        user.role = role
         user.save()
         
         return user
