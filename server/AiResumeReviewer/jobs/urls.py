@@ -19,10 +19,6 @@ urlpatterns = [
     path('my-jobs/<int:pk>/', RecruiterJobDetailView.as_view(), name='recruiter-job-detail'),
 
 
-    # ==============================
-    # 2. CANDIDATE ENDPOINTS (For Public Site)
-    # ==============================
-    
     # List all active jobs (No login required)
     path('public/', PublicJobListView.as_view(), name='public-jobs'),
     
