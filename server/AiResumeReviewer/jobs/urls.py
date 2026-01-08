@@ -26,5 +26,5 @@ urlpatterns = [
     path('<int:pk>/apply/', ApplyJobView.as_view(), name='apply-job'),
 
 
-    path('<int:pk>/applicants/', JobApplicantsView.as_view()),
+    path('<int:pk>/applicants/', JobApplicantsView.as_view()),,
 ]
